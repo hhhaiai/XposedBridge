@@ -3,6 +3,7 @@ package de.robv.android.xposed;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 
 import java.io.File;
+import java.lang.ref.FinalizerReference;
 import java.security.Provider;
 import java.util.MdfppReflectionUtils;
 
@@ -89,6 +90,9 @@ public class SamsungHelper {
 
 				}
 			});
+		} catch (NoSuchMethodError e) {
+			// Ignore it
+			// This method may not exist on some TW Roms (ex: Note 5)
 		} catch (Throwable e) {
 			XposedBridge.log(e);
 		}
@@ -103,6 +107,9 @@ public class SamsungHelper {
 
 				}
 			});
+		} catch (NoSuchMethodError e) {
+			// Ignore it
+			// This method may not exist on some TW Roms (ex: GS6)
 		} catch (Throwable e) {
 			XposedBridge.log(e);
 		}
@@ -111,6 +118,9 @@ public class SamsungHelper {
 			// Force HttpsURLConnection to use defaultHostnameVerifier instead
 			// of mdppHostnameVerifier by setting mdpp version to null (Note5)
 			findAndHookMethod(HttpsURLConnection.class, "updateMdfVersion", XC_MethodReplacement.returnConstant(null));
+		} catch (NoSuchMethodError e) {
+			// Ignore it
+			// This method may not exist on some TW Roms (ex: GS6)
 		} catch (Throwable e) {
 			XposedBridge.log(e);
 		}
@@ -127,6 +137,9 @@ public class SamsungHelper {
 			// Force HttpsURLConnection to use defaultHostnameVerifier instead
 			// of mdppHostnameVerifier (Note5)
 			findAndHookMethod(MdfppReflectionUtils.class, "isMdfEnforced", XC_MethodReplacement.returnConstant(false));
+		} catch (NoClassDefFoundError e) {
+			// Ignore it
+			// This method may not exist on some TW Roms (ex: GS6)
 		} catch (Throwable e) {
 			XposedBridge.log(e);
 		}
@@ -134,6 +147,25 @@ public class SamsungHelper {
 		try {
 			// Ignore Mdpp checks
 			findAndHookMethod(Services.class, "checkMDPP", Provider.class, XC_MethodReplacement.DO_NOTHING);
+		} catch (Throwable e) {
+			XposedBridge.log(e);
+		}
+
+		try {
+			// Fixes a bootloop on Note 5 devices
+			// Samsung GNote 5 FWs has a stange complicated "awaitFinalization"
+			// method that keep waiting for ever, we set a timeout of 10
+			// secondes
+			findAndHookMethod("java.lang.ref.FinalizerReference$Sentinel", FinalizerReference.class.getClassLoader(), "awaitFinalization", long.class, new XC_MethodHook() {
+				@Override
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					param.args[0] = 10000L;
+				}
+			});
+
+		} catch (NoSuchMethodError e) {
+			// Ignore it
+			// This method may not exist on some TW Roms (ex: GS6)
 		} catch (Throwable e) {
 			XposedBridge.log(e);
 		}
