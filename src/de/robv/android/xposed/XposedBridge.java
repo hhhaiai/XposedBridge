@@ -143,6 +143,11 @@ public final class XposedBridge {
 	private static void initForZygote() throws Throwable {
 		final HashSet<String> loadedPackagesInProcess = new HashSet<String>(1);
 
+		// Hook Samsung Art to disable Mdpp and Fips
+		if (SamsungHelper.isSamsungRom()) {
+			SamsungHelper.hookMdpp();
+		}
+
 		// normal process initialization (for new Activity, Service, BroadcastReceiver etc.)
 		findAndHookMethod(ActivityThread.class, "handleBindApplication", "android.app.ActivityThread.AppBindData", new XC_MethodHook() {
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
