@@ -76,15 +76,13 @@ public final class XposedBridge {
 	public static final String BASE_DIR = "/data/data/" + INSTALLER_PACKAGE_NAME + "/";
 
 	// built-in handlers
-	private static final Map<Member, CopyOnWriteSortedSet<XC_MethodHook>> sHookedMethodCallbacks
-									= new HashMap<Member, CopyOnWriteSortedSet<XC_MethodHook>>();
-	private static final CopyOnWriteSortedSet<XC_LoadPackage> sLoadedPackageCallbacks
-									= new CopyOnWriteSortedSet<XC_LoadPackage>();
-	private static final CopyOnWriteSortedSet<XC_InitPackageResources> sInitPackageResourcesCallbacks
-									= new CopyOnWriteSortedSet<XC_InitPackageResources>();
+	private static final Map<Member, CopyOnWriteSortedSet<XC_MethodHook>> sHookedMethodCallbacks = new HashMap<Member, CopyOnWriteSortedSet<XC_MethodHook>>();
+	private static final CopyOnWriteSortedSet<XC_LoadPackage> sLoadedPackageCallbacks = new CopyOnWriteSortedSet<XC_LoadPackage>();
+	private static final CopyOnWriteSortedSet<XC_InitPackageResources> sInitPackageResourcesCallbacks = new CopyOnWriteSortedSet<XC_InitPackageResources>();
 
 	/**
-	 * Called when native methods and other things are initialized, but before preloading classes etc.
+	 * Called when native methods and other things are initialized, but before
+	 * preloading classes etc.
 	 */
 	protected static void main(String[] args) {
 		// Initialize the Xposed framework and modules
@@ -121,7 +119,9 @@ public final class XposedBridge {
 		protected static void main(String[] args) {
 			try {
 				startClassName = getStartClassName();
-			} catch (Throwable ignored) {};
+			} catch (Throwable ignored) {
+			}
+			;
 
 			isZygote = false;
 			XposedBridge.main(args);
@@ -129,7 +129,9 @@ public final class XposedBridge {
 	}
 
 	private static native String getStartClassName();
+
 	private static native int getRuntime();
+
 	private static native boolean startsSystemServer();
 
 	/**
@@ -138,17 +140,22 @@ public final class XposedBridge {
 	public static native int getXposedVersion();
 
 	/**
-	 * Hook some methods which we want to create an easier interface for developers.
+	 * Hook some methods which we want to create an easier interface for
+	 * developers.
 	 */
 	private static void initForZygote() throws Throwable {
 		final HashSet<String> loadedPackagesInProcess = new HashSet<String>(1);
 
+		/**
+		 * 暂时取消三星支持，编译报错
+		 */
 		// Hook Samsung Art to disable Mdpp and Fips
-		if (SamsungHelper.isSamsungRom()) {
-			SamsungHelper.hookMdpp();
-		}
+		// if (SamsungHelper.isSamsungRom()) {
+		// SamsungHelper.hookMdpp();
+		// }
 
-		// normal process initialization (for new Activity, Service, BroadcastReceiver etc.)
+		// normal process initialization (for new Activity, Service,
+		// BroadcastReceiver etc.)
 		findAndHookMethod(ActivityThread.class, "handleBindApplication", "android.app.ActivityThread.AppBindData", new XC_MethodHook() {
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 				ActivityThread activityThread = (ActivityThread) param.thisObject;
@@ -185,8 +192,7 @@ public final class XposedBridge {
 
 		// system_server initialization
 		if (Build.VERSION.SDK_INT < 21) {
-			findAndHookMethod("com.android.server.ServerThread", null,
-					Build.VERSION.SDK_INT < 19 ? "run" : "initAndLoop", new XC_MethodHook() {
+			findAndHookMethod("com.android.server.ServerThread", null, Build.VERSION.SDK_INT < 19 ? "run" : "initAndLoop", new XC_MethodHook() {
 				@Override
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					SELinuxHelper.initForProcess("android");
@@ -194,7 +200,10 @@ public final class XposedBridge {
 
 					LoadPackageParam lpparam = new LoadPackageParam(sLoadedPackageCallbacks);
 					lpparam.packageName = "android";
-					lpparam.processName = "android"; // it's actually system_server, but other functions return this as well
+					lpparam.processName = "android"; // it's actually
+			                                         // system_server, but other
+			                                         // functions return this as
+			                                         // well
 					lpparam.classLoader = BOOTCLASSLOADER;
 					lpparam.appInfo = null;
 					lpparam.isFirstApplication = true;
@@ -207,35 +216,40 @@ public final class XposedBridge {
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 					findAndHookMethod("com.android.server.SystemServer", cl, "startBootstrapServices", new XC_MethodHook() {
-						@Override
-						protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-							SELinuxHelper.initForProcess("android");
-							loadedPackagesInProcess.add("android");
+				        @Override
+				        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					        SELinuxHelper.initForProcess("android");
+					        loadedPackagesInProcess.add("android");
 
-							LoadPackageParam lpparam = new LoadPackageParam(sLoadedPackageCallbacks);
-							lpparam.packageName = "android";
-							lpparam.processName = "android"; // it's actually system_server, but other functions return this as well
-							lpparam.classLoader = cl;
-							lpparam.appInfo = null;
-							lpparam.isFirstApplication = true;
-							XC_LoadPackage.callAll(lpparam);
+					        LoadPackageParam lpparam = new LoadPackageParam(sLoadedPackageCallbacks);
+					        lpparam.packageName = "android";
+					        lpparam.processName = "android"; // it's actually
+			                                                 // system_server,
+			                                                 // but other
+			                                                 // functions return
+			                                                 // this as well
+					        lpparam.classLoader = cl;
+					        lpparam.appInfo = null;
+					        lpparam.isFirstApplication = true;
+					        XC_LoadPackage.callAll(lpparam);
 
-							// Force dex2oat while the system is still booting to ensure that system content providers work.
-							findAndHookMethod("com.android.server.pm.PackageManagerService", cl, "performDexOpt",
-									String.class, String.class, boolean.class, new XC_MethodHook() {
-								@Override
-								protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-									if (getObjectField(param.thisObject, "mDeferredDexOpt") != null)
-										param.args[2] = true;
-								}
-							});
-						}
-					});
+					        // Force dex2oat while the system is still booting
+			                // to ensure that system content providers work.
+					        findAndHookMethod("com.android.server.pm.PackageManagerService", cl, "performDexOpt", String.class, String.class, boolean.class, new XC_MethodHook() {
+				                @Override
+				                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					                if (getObjectField(param.thisObject, "mDeferredDexOpt") != null)
+						                param.args[2] = true;
+				                }
+			                });
+				        }
+			        });
 				}
 			});
 		}
 
-		// when a package is loaded for an existing process, trigger the callbacks as well
+		// when a package is loaded for an existing process, trigger the
+		// callbacks as well
 		hookAllConstructors(LoadedApk.class, new XC_MethodHook() {
 			@Override
 			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -259,13 +273,11 @@ public final class XposedBridge {
 			}
 		});
 
-		findAndHookMethod("android.app.ApplicationPackageManager", null, "getResourcesForApplication",
-				ApplicationInfo.class, new XC_MethodHook() {
+		findAndHookMethod("android.app.ApplicationPackageManager", null, "getResourcesForApplication", ApplicationInfo.class, new XC_MethodHook() {
 			@Override
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 				ApplicationInfo app = (ApplicationInfo) param.args[0];
-				XResources.setPackageNameForResDir(app.packageName,
-					app.uid == Process.myUid() ? app.sourceDir : app.publicSourceDir);
+				XResources.setPackageNameForResDir(app.packageName, app.uid == Process.myUid() ? app.sourceDir : app.publicSourceDir);
 			}
 		});
 
@@ -279,12 +291,9 @@ public final class XposedBridge {
 
 	private static void hookResources() throws Throwable {
 		/*
-		 * getTopLevelResources(a)
-		 *   -> getTopLevelResources(b)
-		 *     -> key = new ResourcesKey()
-		 *     -> r = new Resources()
-		 *     -> mActiveResources.put(key, r)
-		 *     -> return r
+		 * getTopLevelResources(a) -> getTopLevelResources(b) -> key = new
+		 * ResourcesKey() -> r = new Resources() -> mActiveResources.put(key, r)
+		 * -> return r
 		 */
 
 		final Class<?> classGTLR;
@@ -334,10 +343,8 @@ public final class XposedBridge {
 				newRes.initObject(resDir);
 
 				@SuppressWarnings("unchecked")
-				Map<Object, WeakReference<Resources>> mActiveResources =
-						(Map<Object, WeakReference<Resources>>) getObjectField(param.thisObject, "mActiveResources");
-				Object lockObject = (Build.VERSION.SDK_INT <= 18)
-						? getObjectField(param.thisObject, "mPackages") : param.thisObject;
+				Map<Object, WeakReference<Resources>> mActiveResources = (Map<Object, WeakReference<Resources>>) getObjectField(param.thisObject, "mActiveResources");
+				Object lockObject = (Build.VERSION.SDK_INT <= 18) ? getObjectField(param.thisObject, "mPackages") : param.thisObject;
 
 				synchronized (lockObject) {
 					WeakReference<Resources> existing = mActiveResources.get(key);
@@ -413,13 +420,15 @@ public final class XposedBridge {
 
 	private static void hookXposedInstaller(ClassLoader classLoader) {
 		try {
-			findAndHookMethod(INSTALLER_PACKAGE_NAME + ".XposedApp", classLoader, "getActiveXposedVersion",
-				XC_MethodReplacement.returnConstant(getXposedVersion()));
-		} catch (Throwable t) { XposedBridge.log(t); }
+			findAndHookMethod(INSTALLER_PACKAGE_NAME + ".XposedApp", classLoader, "getActiveXposedVersion", XC_MethodReplacement.returnConstant(getXposedVersion()));
+		} catch (Throwable t) {
+			XposedBridge.log(t);
+		}
 	}
 
 	/**
-	 * Try to load all modules defined in <code>BASE_DIR/conf/modules.list</code>
+	 * Try to load all modules defined in
+	 * <code>BASE_DIR/conf/modules.list</code>
 	 */
 	private static void loadModules() throws IOException {
 		final String filename = BASE_DIR + "conf/modules.list";
@@ -439,8 +448,8 @@ public final class XposedBridge {
 	}
 
 	/**
-	 * Load a module from an APK by calling the init(String) method for all classes defined
-	 * in <code>assets/xposed_init</code>.
+	 * Load a module from an APK by calling the init(String) method for all
+	 * classes defined in <code>assets/xposed_init</code>.
 	 */
 	@SuppressWarnings("deprecation")
 	private static void loadModule(String apk) {
@@ -467,14 +476,14 @@ public final class XposedBridge {
 					continue;
 
 				try {
-					log ("  Loading class " + moduleClassName);
+					log("  Loading class " + moduleClassName);
 					Class<?> moduleClass = mcl.loadClass(moduleClassName);
 
 					if (!IXposedMod.class.isAssignableFrom(moduleClass)) {
-						log ("    This class doesn't implement any sub-interface of IXposedMod, skipping it");
+						log("    This class doesn't implement any sub-interface of IXposedMod, skipping it");
 						continue;
 					} else if (disableResources && IXposedHookInitPackageResources.class.isAssignableFrom(moduleClass)) {
-						log ("    This class requires resource-related hooks (which are disabled), skipping it.");
+						log("    This class requires resource-related hooks (which are disabled), skipping it.");
 						continue;
 					}
 
@@ -509,17 +518,20 @@ public final class XposedBridge {
 		} finally {
 			try {
 				is.close();
-			} catch (IOException ignored) {}
+			} catch (IOException ignored) {
+			}
 		}
 	}
 
 	/**
 	 * Writes a message to the Xposed error log.
 	 *
-	 * <p>DON'T FLOOD THE LOG!!! This is only meant for error logging.
-	 * If you want to write information/debug messages, use logcat.
+	 * <p>
+	 * DON'T FLOOD THE LOG!!! This is only meant for error logging. If you want
+	 * to write information/debug messages, use logcat.
 	 *
-	 * @param text The log message.
+	 * @param text
+	 *            The log message.
 	 */
 	public synchronized static void log(String text) {
 		Log.i(TAG, text);
@@ -528,10 +540,12 @@ public final class XposedBridge {
 	/**
 	 * Logs a stack trace to the Xposed error log.
 	 *
-	 * <p>DON'T FLOOD THE LOG!!! This is only meant for error logging.
-	 * If you want to write information/debug messages, use logcat.
+	 * <p>
+	 * DON'T FLOOD THE LOG!!! This is only meant for error logging. If you want
+	 * to write information/debug messages, use logcat.
 	 *
-	 * @param t The Throwable object for the stack trace.
+	 * @param t
+	 *            The Throwable object for the stack trace.
 	 */
 	public synchronized static void log(Throwable t) {
 		Log.e(TAG, Log.getStackTraceString(t));
@@ -540,7 +554,8 @@ public final class XposedBridge {
 	/**
 	 * Hook any method with the specified callback
 	 *
-	 * @param hookMethod The method to be hooked
+	 * @param hookMethod
+	 *            The method to be hooked
 	 * @param callback
 	 */
 	public static XC_MethodHook.Unhook hookMethod(Member hookMethod, XC_MethodHook callback) {
@@ -586,8 +601,12 @@ public final class XposedBridge {
 
 	/**
 	 * Removes the callback for a hooked method
-	 * @param hookMethod The method for which the callback should be removed
-	 * @param callback The reference to the callback as specified in {@link #hookMethod}
+	 * 
+	 * @param hookMethod
+	 *            The method for which the callback should be removed
+	 * @param callback
+	 *            The reference to the callback as specified in
+	 *            {@link #hookMethod}
 	 */
 	public static void unhookMethod(Member hookMethod, XC_MethodHook callback) {
 		CopyOnWriteSortedSet<XC_MethodHook> callbacks;
@@ -617,14 +636,12 @@ public final class XposedBridge {
 	/**
 	 * This method is called as a replacement for hooked methods.
 	 */
-	private static Object handleHookedMethod(Member method, int originalMethodId, Object additionalInfoObj,
-			Object thisObject, Object[] args) throws Throwable {
+	private static Object handleHookedMethod(Member method, int originalMethodId, Object additionalInfoObj, Object thisObject, Object[] args) throws Throwable {
 		AdditionalHookInfo additionalInfo = (AdditionalHookInfo) additionalInfoObj;
 
 		if (disableHooks) {
 			try {
-				return invokeOriginalMethodNative(method, originalMethodId, additionalInfo.parameterTypes,
-						additionalInfo.returnType, thisObject, args);
+				return invokeOriginalMethodNative(method, originalMethodId, additionalInfo.parameterTypes, additionalInfo.returnType, thisObject, args);
 			} catch (InvocationTargetException e) {
 				throw e.getCause();
 			}
@@ -634,8 +651,7 @@ public final class XposedBridge {
 		final int callbacksLength = callbacksSnapshot.length;
 		if (callbacksLength == 0) {
 			try {
-				return invokeOriginalMethodNative(method, originalMethodId, additionalInfo.parameterTypes,
-						additionalInfo.returnType, thisObject, args);
+				return invokeOriginalMethodNative(method, originalMethodId, additionalInfo.parameterTypes, additionalInfo.returnType, thisObject, args);
 			} catch (InvocationTargetException e) {
 				throw e.getCause();
 			}
@@ -654,14 +670,16 @@ public final class XposedBridge {
 			} catch (Throwable t) {
 				XposedBridge.log(t);
 
-				// reset result (ignoring what the unexpectedly exiting callback did)
+				// reset result (ignoring what the unexpectedly exiting callback
+				// did)
 				param.setResult(null);
 				param.returnEarly = false;
 				continue;
 			}
 
 			if (param.returnEarly) {
-				// skip remaining "before" callbacks and corresponding "after" callbacks
+				// skip remaining "before" callbacks and corresponding "after"
+				// callbacks
 				beforeIdx++;
 				break;
 			}
@@ -670,8 +688,7 @@ public final class XposedBridge {
 		// call original method if not requested otherwise
 		if (!param.returnEarly) {
 			try {
-				param.setResult(invokeOriginalMethodNative(method, originalMethodId,
-						additionalInfo.parameterTypes, additionalInfo.returnType, param.thisObject, param.args));
+				param.setResult(invokeOriginalMethodNative(method, originalMethodId, additionalInfo.parameterTypes, additionalInfo.returnType, param.thisObject, param.args));
 			} catch (InvocationTargetException e) {
 				param.setThrowable(e.getCause());
 			}
@@ -680,7 +697,7 @@ public final class XposedBridge {
 		// call "after method" callbacks
 		int afterIdx = beforeIdx - 1;
 		do {
-			Object lastResult =  param.getResult();
+			Object lastResult = param.getResult();
 			Throwable lastThrowable = param.getThrowable();
 
 			try {
@@ -688,7 +705,8 @@ public final class XposedBridge {
 			} catch (Throwable t) {
 				XposedBridge.log(t);
 
-				// reset to last result (ignoring what the unexpectedly exiting callback did)
+				// reset to last result (ignoring what the unexpectedly exiting
+				// callback did)
 				if (lastThrowable == null)
 					param.setResult(lastResult);
 				else
@@ -704,7 +722,8 @@ public final class XposedBridge {
 	}
 
 	/**
-	 * Get notified when a package is loaded. This is especially useful to hook some package-specific methods.
+	 * Get notified when a package is loaded. This is especially useful to hook
+	 * some package-specific methods.
 	 */
 	public static XC_LoadPackage.Unhook hookLoadPackage(XC_LoadPackage callback) {
 		synchronized (sLoadedPackageCallbacks) {
@@ -720,7 +739,9 @@ public final class XposedBridge {
 	}
 
 	/**
-	 * Get notified when the resources for a package are loaded. In callbacks, resource replacements can be created.
+	 * Get notified when the resources for a package are loaded. In callbacks,
+	 * resource replacements can be created.
+	 * 
 	 * @return
 	 */
 	public static XC_InitPackageResources.Unhook hookInitPackageResources(XC_InitPackageResources callback) {
@@ -739,45 +760,53 @@ public final class XposedBridge {
 	private native static boolean initNative();
 
 	/**
-	 * Intercept every call to the specified method and call a handler function instead.
-	 * @param method The method to intercept
+	 * Intercept every call to the specified method and call a handler function
+	 * instead.
+	 * 
+	 * @param method
+	 *            The method to intercept
 	 */
 	private native synchronized static void hookMethodNative(Member method, Class<?> declaringClass, int slot, Object additionalInfo);
 
-	private native static Object invokeOriginalMethodNative(Member method, int methodId,
-			Class<?>[] parameterTypes, Class<?> returnType, Object thisObject, Object[] args)
-			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+	private native static Object invokeOriginalMethodNative(Member method, int methodId, Class<?>[] parameterTypes, Class<?> returnType, Object thisObject, Object[] args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
 
-	/** Old method signature to avoid crashes if only XposedBridge.jar is updated, will be removed in the next version */
+	/**
+	 * Old method signature to avoid crashes if only XposedBridge.jar is
+	 * updated, will be removed in the next version
+	 */
 	@Deprecated
 	private native synchronized static void hookMethodNative(Class<?> declaringClass, int slot);
 
 	@Deprecated
-	private native static Object invokeOriginalMethodNative(Member method, Class<?>[] parameterTypes, Class<?> returnType, Object thisObject, Object[] args)
-			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+	private native static Object invokeOriginalMethodNative(Member method, Class<?>[] parameterTypes, Class<?> returnType, Object thisObject, Object[] args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
 
 	/**
-	 * Basically the same as {@link Method#invoke}, but calls the original method
-	 * as it was before the interception by Xposed. Also, access permissions are not checked.
+	 * Basically the same as {@link Method#invoke}, but calls the original
+	 * method as it was before the interception by Xposed. Also, access
+	 * permissions are not checked.
 	 *
-	 * @param method Method to be called
-	 * @param thisObject For non-static calls, the "this" pointer
-	 * @param args Arguments for the method call as Object[] array
+	 * @param method
+	 *            Method to be called
+	 * @param thisObject
+	 *            For non-static calls, the "this" pointer
+	 * @param args
+	 *            Arguments for the method call as Object[] array
 	 * @return The result returned from the invoked method
 	 * @throws NullPointerException
 	 *             if {@code receiver == null} for a non-static method
 	 * @throws IllegalAccessException
-	 *             if this method is not accessible (see {@link AccessibleObject})
+	 *             if this method is not accessible (see
+	 *             {@link AccessibleObject})
 	 * @throws IllegalArgumentException
-	 *             if the number of arguments doesn't match the number of parameters, the receiver
-	 *             is incompatible with the declaring class, or an argument could not be unboxed
-	 *             or converted by a widening conversion to the corresponding parameter type
+	 *             if the number of arguments doesn't match the number of
+	 *             parameters, the receiver is incompatible with the declaring
+	 *             class, or an argument could not be unboxed or converted by a
+	 *             widening conversion to the corresponding parameter type
 	 * @throws InvocationTargetException
 	 *             if an exception was thrown by the invoked method
-
+	 * 
 	 */
-	public static Object invokeOriginalMethod(Member method, Object thisObject, Object[] args)
-			throws NullPointerException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	public static Object invokeOriginalMethod(Member method, Object thisObject, Object[] args) throws NullPointerException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		if (args == null) {
 			args = EMPTY_ARRAY;
 		}
@@ -803,10 +832,11 @@ public final class XposedBridge {
 			return;
 
 		/*
-		 * Whitelist for classes we have prepared for this substitution in native code.
-		 * These classes must be de-facto final, otherwise subclasses which are not loaded by the
-		 * boot classloader will have gaps in their field offsets, which causes issues with code
-		 * where DexOpt replaced field accesses with direct accesses byte offsets.
+		 * Whitelist for classes we have prepared for this substitution in
+		 * native code. These classes must be de-facto final, otherwise
+		 * subclasses which are not loaded by the boot classloader will have
+		 * gaps in their field offsets, which causes issues with code where
+		 * DexOpt replaced field accesses with direct accesses byte offsets.
 		 */
 		if (clazz != XTypedArray.class)
 			throw new IllegalArgumentException("Target class " + clazz + " is not allowed");
@@ -818,7 +848,8 @@ public final class XposedBridge {
 	}
 
 	private static native void setObjectClassNative(Object obj, Class<?> clazz);
-	/*package*/ static native void dumpObjectNative(Object obj);
+
+	/* package */ static native void dumpObjectNative(Object obj);
 
 	/** Framework only, don't call this from your module! */
 	private static Object cloneToSubclass(Object obj, Class<?> targetClazz) {

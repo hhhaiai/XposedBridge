@@ -15,10 +15,14 @@ public final class DirectAccessService extends BaseService {
 	@Override
 	public boolean checkFileAccess(String filename, int mode) {
 		File file = new File(filename);
-		if ((mode & F_OK) != 0 && !file.exists()) return false;
-		if ((mode & R_OK) != 0 && !file.canRead()) return false;
-		if ((mode & W_OK) != 0 && !file.canWrite()) return false;
-		if ((mode & X_OK) != 0 && !file.canExecute()) return false;
+		if ((mode & F_OK) != 0 && !file.exists())
+			return false;
+		if ((mode & R_OK) != 0 && !file.canRead())
+			return false;
+		if ((mode & W_OK) != 0 && !file.canWrite())
+			return false;
+		if ((mode & X_OK) != 0 && !file.canExecute())
+			return false;
 		return true;
 	}
 
@@ -36,7 +40,7 @@ public final class DirectAccessService extends BaseService {
 	@Override
 	public byte[] readFile(String filename) throws IOException {
 		File file = new File(filename);
-		byte content[] = new byte[(int)file.length()];
+		byte content[] = new byte[(int) file.length()];
 		FileInputStream fis = new FileInputStream(file);
 		fis.read(content);
 		fis.close();
@@ -88,16 +92,20 @@ public final class DirectAccessService extends BaseService {
 
 	/**
 	 * {@inheritDoc}
-	 * <p>This implementation returns a BufferedInputStream instead of loading the file into memory.
+	 * <p>
+	 * This implementation returns a BufferedInputStream instead of loading the
+	 * file into memory.
 	 */
 	@Override
 	public InputStream getFileInputStream(String filename) throws IOException {
-		return new BufferedInputStream(new FileInputStream(filename), 16*1024);
+		return new BufferedInputStream(new FileInputStream(filename), 16 * 1024);
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * <p>This implementation returns a BufferedInputStream instead of loading the file into memory.
+	 * <p>
+	 * This implementation returns a BufferedInputStream instead of loading the
+	 * file into memory.
 	 */
 	@Override
 	public FileResult getFileInputStream(String filename, long previousSize, long previousTime) throws IOException {
@@ -106,6 +114,6 @@ public final class DirectAccessService extends BaseService {
 		long time = file.lastModified();
 		if (previousSize == size && previousTime == time)
 			return new FileResult(size, time);
-		return new FileResult(new BufferedInputStream(new FileInputStream(filename), 16*1024), size, time);
+		return new FileResult(new BufferedInputStream(new FileInputStream(filename), 16 * 1024), size, time);
 	}
 }

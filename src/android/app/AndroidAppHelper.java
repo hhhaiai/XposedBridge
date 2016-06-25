@@ -28,23 +28,25 @@ public class AndroidAppHelper {
 	private static boolean HAS_THEME_CONFIG_PARAMETER = false;
 
 	static {
-		CLASS_RESOURCES_KEY = (Build.VERSION.SDK_INT < 19) ?
-			  findClass("android.app.ActivityThread$ResourcesKey", null)
-			: findClass("android.content.res.ResourcesKey", null);
+		CLASS_RESOURCES_KEY = (Build.VERSION.SDK_INT < 19) ? findClass("android.app.ActivityThread$ResourcesKey", null) : findClass("android.content.res.ResourcesKey", null);
 
 		try {
 			// T-Mobile theming engine (CyanogenMod etc.)
 			findField(CLASS_RESOURCES_KEY, "mIsThemeable");
 			HAS_IS_THEMEABLE = true;
 		} catch (NoSuchFieldError ignored) {
-		} catch (Throwable t) { XposedBridge.log(t); }
+		} catch (Throwable t) {
+			XposedBridge.log(t);
+		}
 
 		if (HAS_IS_THEMEABLE && Build.VERSION.SDK_INT >= 21) {
 			try {
 				findMethodExact("android.app.ResourcesManager", null, "getThemeConfig");
 				HAS_THEME_CONFIG_PARAMETER = true;
 			} catch (NoSuchMethodError ignored) {
-			} catch (Throwable t) { XposedBridge.log(t); }
+			} catch (Throwable t) {
+				XposedBridge.log(t);
+			}
 		}
 	}
 

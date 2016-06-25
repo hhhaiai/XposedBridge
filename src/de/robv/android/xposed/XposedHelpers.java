@@ -31,10 +31,12 @@ public class XposedHelpers {
 	private static final HashMap<String, ThreadLocal<AtomicInteger>> sMethodDepth = new HashMap<String, ThreadLocal<AtomicInteger>>();
 
 	/**
-	 * Look up a class with the specified class loader (or the boot class loader if
-	 * <code>classLoader</code> is <code>null</code>).
-	 * <p>Class names can be specified in different formats:
-	 * <ul><li>java.lang.Integer
+	 * Look up a class with the specified class loader (or the boot class loader
+	 * if <code>classLoader</code> is <code>null</code>).
+	 * <p>
+	 * Class names can be specified in different formats:
+	 * <ul>
+	 * <li>java.lang.Integer
 	 * <li>int
 	 * <li>int[]
 	 * <li>[I
@@ -42,8 +44,10 @@ public class XposedHelpers {
 	 * <li>[Ljava.lang.String;
 	 * <li>android.app.ActivityThread.ResourcesKey
 	 * <li>android.app.ActivityThread$ResourcesKey
-	 * <li>android.app.ActivityThread$ResourcesKey[]</ul>
-	 * <p>A {@link ClassNotFoundError} is thrown in case the class was not found.
+	 * <li>android.app.ActivityThread$ResourcesKey[]
+	 * </ul>
+	 * <p>
+	 * A {@link ClassNotFoundError} is thrown in case the class was not found.
 	 */
 	public static Class<?> findClass(String className, ClassLoader classLoader) {
 		if (classLoader == null)
@@ -56,8 +60,9 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Look up a field in a class and set it to accessible. The result is cached.
-	 * If the field was not found, a {@link NoSuchFieldError} will be thrown.
+	 * Look up a field in a class and set it to accessible. The result is
+	 * cached. If the field was not found, a {@link NoSuchFieldError} will be
+	 * thrown.
 	 */
 	public static Field findField(Class<?> clazz, String fieldName) {
 		StringBuilder sb = new StringBuilder(clazz.getName());
@@ -94,16 +99,17 @@ public class XposedHelpers {
 
 				try {
 					return clazz.getDeclaredField(fieldName);
-				} catch (NoSuchFieldException ignored) {}
+				} catch (NoSuchFieldException ignored) {
+				}
 			}
 			throw e;
 		}
 	}
 
 	/**
-	 * Returns the first field of the given type in a class.
-	 * Might be useful for Proguard'ed classes to identify fields with unique types.
-	 * If no matching field was not found, a {@link NoSuchFieldError} will be thrown.
+	 * Returns the first field of the given type in a class. Might be useful for
+	 * Proguard'ed classes to identify fields with unique types. If no matching
+	 * field was not found, a {@link NoSuchFieldError} will be thrown.
 	 */
 	public static Field findFirstFieldByExactType(Class<?> clazz, Class<?> type) {
 		Class<?> clz = clazz;
@@ -120,14 +126,16 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Look up a method and place a hook on it. The last argument must be the callback for the hook.
+	 * Look up a method and place a hook on it. The last argument must be the
+	 * callback for the hook.
+	 * 
 	 * @see #findMethodExact(Class, String, Object...)
 	 */
 	public static XC_MethodHook.Unhook findAndHookMethod(Class<?> clazz, String methodName, Object... parameterTypesAndCallback) {
-		if (parameterTypesAndCallback.length == 0 || !(parameterTypesAndCallback[parameterTypesAndCallback.length-1] instanceof XC_MethodHook))
+		if (parameterTypesAndCallback.length == 0 || !(parameterTypesAndCallback[parameterTypesAndCallback.length - 1] instanceof XC_MethodHook))
 			throw new IllegalArgumentException("no callback defined");
 
-		XC_MethodHook callback = (XC_MethodHook) parameterTypesAndCallback[parameterTypesAndCallback.length-1];
+		XC_MethodHook callback = (XC_MethodHook) parameterTypesAndCallback[parameterTypesAndCallback.length - 1];
 		Method m = findMethodExact(clazz, methodName, getParameterClasses(clazz.getClassLoader(), parameterTypesAndCallback));
 
 		return XposedBridge.hookMethod(m, callback);
@@ -139,12 +147,15 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Look up a method in a class and set it to accessible. The result is cached.
-	 * If the method was not found, a {@link NoSuchMethodError} will be thrown.
+	 * Look up a method in a class and set it to accessible. The result is
+	 * cached. If the method was not found, a {@link NoSuchMethodError} will be
+	 * thrown.
 	 *
-	 * <p>The parameter types may either be specified as <code>Class</code> or <code>String</code>
-	 * objects. In the latter case, the class is looked up using {@link #findClass} with the same
-	 * class loader as the method's class.
+	 * <p>
+	 * The parameter types may either be specified as <code>Class</code> or
+	 * <code>String</code> objects. In the latter case, the class is looked up
+	 * using {@link #findClass} with the same class loader as the method's
+	 * class.
 	 */
 	public static Method findMethodExact(Class<?> clazz, String methodName, Object... parameterTypes) {
 		return findMethodExact(clazz, methodName, getParameterClasses(clazz.getClassLoader(), parameterTypes));
@@ -183,10 +194,12 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Returns an array of all methods in a class with the specified parameter types.
+	 * Returns an array of all methods in a class with the specified parameter
+	 * types.
 	 *
-	 * The return type is optional, it will not be compared if it is {@code null}.
-	 * Use {@code void.class} if you want to search for methods returning nothing.
+	 * The return type is optional, it will not be compared if it is
+	 * {@code null}. Use {@code void.class} if you want to search for methods
+	 * returning nothing.
 	 */
 	public static Method[] findMethodsByExactParameters(Class<?> clazz, Class<?> returnType, Class<?>... parameterTypes) {
 		List<Method> result = new LinkedList<Method>();
@@ -216,9 +229,11 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Look up a method in a class and set it to accessible. The result is cached.
-	 * This does not only look for exact matches, but for the closest match.
-	 * If the method was not found, a {@link NoSuchMethodError} will be thrown.
+	 * Look up a method in a class and set it to accessible. The result is
+	 * cached. This does not only look for exact matches, but for the closest
+	 * match. If the method was not found, a {@link NoSuchMethodError} will be
+	 * thrown.
+	 * 
 	 * @see MethodUtils#getMatchingAccessibleMethod
 	 */
 	public static Method findMethodBestMatch(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
@@ -240,7 +255,8 @@ public class XposedHelpers {
 			Method method = findMethodExact(clazz, methodName, parameterTypes);
 			methodCache.put(fullMethodName, method);
 			return method;
-		} catch (NoSuchMethodError ignored) {}
+		} catch (NoSuchMethodError ignored) {
+		}
 
 		Method bestMatch = null;
 		Class<?> clz = clazz;
@@ -254,10 +270,7 @@ public class XposedHelpers {
 				// compare name and parameters
 				if (method.getName().equals(methodName) && ClassUtils.isAssignable(parameterTypes, method.getParameterTypes(), true)) {
 					// get accessible version of method
-					if (bestMatch == null || MemberUtils.compareParameterTypes(
-							method.getParameterTypes(),
-							bestMatch.getParameterTypes(),
-							parameterTypes) < 0) {
+					if (bestMatch == null || MemberUtils.compareParameterTypes(method.getParameterTypes(), bestMatch.getParameterTypes(), parameterTypes) < 0) {
 						bestMatch = method;
 					}
 				}
@@ -278,9 +291,10 @@ public class XposedHelpers {
 
 	/**
 	 * Look up a method in a class and set it to accessible. Parameter types are
-	 * determined from the <code>args</code> for the method call. The result is cached.
-	 * This does not only look for exact matches, but for the closest match.
-	 * If the method was not found, a {@link NoSuchMethodError} will be thrown.
+	 * determined from the <code>args</code> for the method call. The result is
+	 * cached. This does not only look for exact matches, but for the closest
+	 * match. If the method was not found, a {@link NoSuchMethodError} will be
+	 * thrown.
 	 */
 	public static Method findMethodBestMatch(Class<?> clazz, String methodName, Object... args) {
 		return findMethodBestMatch(clazz, methodName, getParameterTypes(args));
@@ -288,11 +302,11 @@ public class XposedHelpers {
 
 	/**
 	 * Look up a method in a class and set it to accessible. Parameter types are
-	 * preferably taken from the <code>parameterTypes</code>. Any item in this array that
-	 * is <code>null</code> is determined from the corresponding item in <code>args</code>.
-	 * The result is cached.
-	 * This does not only look for exact matches, but for the closest match.
-	 * If the method was not found, a {@link NoSuchMethodError} will be thrown.
+	 * preferably taken from the <code>parameterTypes</code>. Any item in this
+	 * array that is <code>null</code> is determined from the corresponding item
+	 * in <code>args</code>. The result is cached. This does not only look for
+	 * exact matches, but for the closest match. If the method was not found, a
+	 * {@link NoSuchMethodError} will be thrown.
 	 */
 	public static Method findMethodBestMatch(Class<?> clazz, String methodName, Class<?>[] parameterTypes, Object[] args) {
 		Class<?>[] argsClasses = null;
@@ -318,8 +332,8 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Retrieve classes from an array, where each element might either be a Class
-	 * already, or a String with the full class name.
+	 * Retrieve classes from an array, where each element might either be a
+	 * Class already, or a String with the full class name.
 	 */
 	private static Class<?>[] getParameterClasses(ClassLoader classLoader, Object[] parameterTypesAndCallback) {
 		Class<?>[] parameterClasses = null;
@@ -333,7 +347,7 @@ public class XposedHelpers {
 				continue;
 
 			if (parameterClasses == null)
-				parameterClasses = new Class<?>[i+1];
+				parameterClasses = new Class<?>[i + 1];
 
 			if (type instanceof Class)
 				parameterClasses[i] = (Class<?>) type;
@@ -375,7 +389,6 @@ public class XposedHelpers {
 		return sb.toString();
 	}
 
-
 	public static Constructor<?> findConstructorExact(Class<?> clazz, Object... parameterTypes) {
 		return findConstructorExact(clazz, getParameterClasses(clazz.getClassLoader(), parameterTypes));
 	}
@@ -409,14 +422,16 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Look up a constructor and place a hook on it. The last argument must be the callback for the hook.
+	 * Look up a constructor and place a hook on it. The last argument must be
+	 * the callback for the hook.
+	 * 
 	 * @see #findConstructorExact(Class, Object...)
 	 */
 	public static XC_MethodHook.Unhook findAndHookConstructor(Class<?> clazz, Object... parameterTypesAndCallback) {
-		if (parameterTypesAndCallback.length == 0 || !(parameterTypesAndCallback[parameterTypesAndCallback.length-1] instanceof XC_MethodHook))
+		if (parameterTypesAndCallback.length == 0 || !(parameterTypesAndCallback[parameterTypesAndCallback.length - 1] instanceof XC_MethodHook))
 			throw new IllegalArgumentException("no callback defined");
 
-		XC_MethodHook callback = (XC_MethodHook) parameterTypesAndCallback[parameterTypesAndCallback.length-1];
+		XC_MethodHook callback = (XC_MethodHook) parameterTypesAndCallback[parameterTypesAndCallback.length - 1];
 		Constructor<?> m = findConstructorExact(clazz, getParameterClasses(clazz.getClassLoader(), parameterTypesAndCallback));
 
 		return XposedBridge.hookMethod(m, callback);
@@ -444,7 +459,8 @@ public class XposedHelpers {
 			Constructor<?> constructor = findConstructorExact(clazz, parameterTypes);
 			constructorCache.put(fullConstructorName, constructor);
 			return constructor;
-		} catch (NoSuchMethodError ignored) {}
+		} catch (NoSuchMethodError ignored) {
+		}
 
 		Constructor<?> bestMatch = null;
 		Constructor<?>[] constructors = clazz.getDeclaredConstructors();
@@ -452,10 +468,7 @@ public class XposedHelpers {
 			// compare name and parameters
 			if (ClassUtils.isAssignable(parameterTypes, constructor.getParameterTypes(), true)) {
 				// get accessible version of method
-				if (bestMatch == null || MemberUtils.compareParameterTypes(
-						constructor.getParameterTypes(),
-						bestMatch.getParameterTypes(),
-						parameterTypes) < 0) {
+				if (bestMatch == null || MemberUtils.compareParameterTypes(constructor.getParameterTypes(), bestMatch.getParameterTypes(), parameterTypes) < 0) {
 					bestMatch = constructor;
 				}
 			}
@@ -490,15 +503,17 @@ public class XposedHelpers {
 
 	public static class ClassNotFoundError extends Error {
 		private static final long serialVersionUID = -1070936889459514628L;
+
 		public ClassNotFoundError(Throwable cause) {
 			super(cause);
 		}
+
 		public ClassNotFoundError(String detailMessage, Throwable cause) {
 			super(detailMessage, cause);
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	public static void setObjectField(Object obj, String fieldName, Object value) {
 		try {
 			findField(obj.getClass(), fieldName).set(obj, value);
@@ -607,7 +622,7 @@ public class XposedHelpers {
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	public static Object getObjectField(Object obj, String fieldName) {
 		try {
 			return findField(obj.getClass(), fieldName).get(obj);
@@ -620,7 +635,9 @@ public class XposedHelpers {
 		}
 	}
 
-	/** For inner classes, return the "this" reference of the surrounding class */
+	/**
+	 * For inner classes, return the "this" reference of the surrounding class
+	 */
 	public static Object getSurroundingThis(Object obj) {
 		return getObjectField(obj, "this$0");
 	}
@@ -721,7 +738,7 @@ public class XposedHelpers {
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	public static void setStaticObjectField(Class<?> clazz, String fieldName, Object value) {
 		try {
 			findField(clazz, fieldName).set(null, value);
@@ -830,7 +847,7 @@ public class XposedHelpers {
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	public static Object getStaticObjectField(Class<?> clazz, String fieldName) {
 		try {
 			return findField(clazz, fieldName).get(null);
@@ -939,10 +956,11 @@ public class XposedHelpers {
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	/**
-	 * Call instance or static method <code>methodName</code> for object <code>obj</code> with the arguments
-	 * <code>args</code>. The types for the arguments will be determined automaticall from <code>args</code>
+	 * Call instance or static method <code>methodName</code> for object
+	 * <code>obj</code> with the arguments <code>args</code>. The types for the
+	 * arguments will be determined automaticall from <code>args</code>
 	 */
 	public static Object callMethod(Object obj, String methodName, Object... args) {
 		try {
@@ -959,10 +977,11 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Call instance or static method <code>methodName</code> for object <code>obj</code> with the arguments
-	 * <code>args</code>. The types for the arguments will be taken from <code>parameterTypes</code>.
-	 * This array can have items that are <code>null</code>. In this case, the type for this parameter
-	 * is determined from <code>args</code>.
+	 * Call instance or static method <code>methodName</code> for object
+	 * <code>obj</code> with the arguments <code>args</code>. The types for the
+	 * arguments will be taken from <code>parameterTypes</code>. This array can
+	 * have items that are <code>null</code>. In this case, the type for this
+	 * parameter is determined from <code>args</code>.
 	 */
 	public static Object callMethod(Object obj, String methodName, Class<?>[] parameterTypes, Object... args) {
 		try {
@@ -979,8 +998,9 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Call static method <code>methodName</code> for class <code>clazz</code> with the arguments
-	 * <code>args</code>. The types for the arguments will be determined automaticall from <code>args</code>
+	 * Call static method <code>methodName</code> for class <code>clazz</code>
+	 * with the arguments <code>args</code>. The types for the arguments will be
+	 * determined automaticall from <code>args</code>
 	 */
 	public static Object callStaticMethod(Class<?> clazz, String methodName, Object... args) {
 		try {
@@ -997,10 +1017,11 @@ public class XposedHelpers {
 	}
 
 	/**
-	 * Call static method <code>methodName</code> for class <code>clazz</code> with the arguments
-	 * <code>args</code>. The types for the arguments will be taken from <code>parameterTypes</code>.
-	 * This array can have items that are <code>null</code>. In this case, the type for this parameter
-	 * is determined from <code>args</code>.
+	 * Call static method <code>methodName</code> for class <code>clazz</code>
+	 * with the arguments <code>args</code>. The types for the arguments will be
+	 * taken from <code>parameterTypes</code>. This array can have items that
+	 * are <code>null</code>. In this case, the type for this parameter is
+	 * determined from <code>args</code>.
 	 */
 	public static Object callStaticMethod(Class<?> clazz, String methodName, Class<?>[] parameterTypes, Object... args) {
 		try {
@@ -1018,15 +1039,17 @@ public class XposedHelpers {
 
 	public static class InvocationTargetError extends Error {
 		private static final long serialVersionUID = -1070936889459514628L;
+
 		public InvocationTargetError(Throwable cause) {
 			super(cause);
 		}
+
 		public InvocationTargetError(String detailMessage, Throwable cause) {
 			super(detailMessage, cause);
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	public static Object newInstance(Class<?> clazz, Object... args) {
 		try {
 			return findConstructorBestMatch(clazz, args).newInstance(args);
@@ -1059,7 +1082,7 @@ public class XposedHelpers {
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	public static Object setAdditionalInstanceField(Object obj, String key, Object value) {
 		if (obj == null)
 			throw new NullPointerException("object must not be null");
@@ -1140,7 +1163,7 @@ public class XposedHelpers {
 		return removeAdditionalInstanceField(clazz, key);
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	/**
 	 * Load an asset from a resource and return the content as byte array.
 	 */
@@ -1179,9 +1202,10 @@ public class XposedHelpers {
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	/**
 	 * Increment the depth counter for the given method.
+	 * 
 	 * @return The updated depth.
 	 */
 	public static int incrementMethodDepth(String method) {
@@ -1190,6 +1214,7 @@ public class XposedHelpers {
 
 	/**
 	 * Decrement the depth counter for the given method.
+	 * 
 	 * @return The updated depth.
 	 */
 	public static int decrementMethodDepth(String method) {
@@ -1198,6 +1223,7 @@ public class XposedHelpers {
 
 	/**
 	 * Get the depth counter for the given method.
+	 * 
 	 * @return The depth.
 	 */
 	public static int getMethodDepth(String method) {
@@ -1219,15 +1245,19 @@ public class XposedHelpers {
 		}
 	}
 
-	//#################################################################################################
+	// #################################################################################################
 	// TODO helpers for view traversing
-	/*To make it easier, I will try and implement some more helpers:
-	- add view before/after existing view (I already mentioned that I think)
-	- get index of view in its parent
-	- get next/previous sibling (maybe with an optional argument "type", that might be ImageView.class and gives you the next sibling that is an ImageView)?
-	- get next/previous element (similar to the above, but would also work if the next element has a different parent, it would just go up the hierarchy and then down again until it finds a matching element)
-	- find the first child that is an instance of a specified class
-	- find all (direct or indirect) children of a specified class
-	*/
+	/*
+	 * To make it easier, I will try and implement some more helpers: - add view
+	 * before/after existing view (I already mentioned that I think) - get index
+	 * of view in its parent - get next/previous sibling (maybe with an optional
+	 * argument "type", that might be ImageView.class and gives you the next
+	 * sibling that is an ImageView)? - get next/previous element (similar to
+	 * the above, but would also work if the next element has a different
+	 * parent, it would just go up the hierarchy and then down again until it
+	 * finds a matching element) - find the first child that is an instance of a
+	 * specified class - find all (direct or indirect) children of a specified
+	 * class
+	 */
 
 }

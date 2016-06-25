@@ -21,8 +21,8 @@ import de.robv.android.xposed.services.FileResult;
 
 /**
  * This class is basically the same as SharedPreferencesImpl from AOSP, but
- * read-only and without listeners support. Instead, it is made to be
- * compatible with all ROMs.
+ * read-only and without listeners support. Instead, it is made to be compatible
+ * with all ROMs.
  */
 public final class XSharedPreferences implements SharedPreferences {
 	private static final String TAG = "XSharedPreferences";
@@ -35,7 +35,9 @@ public final class XSharedPreferences implements SharedPreferences {
 
 	/**
 	 * Read settings from the specified file.
-	 * @param prefFile The file to read the preferences from.
+	 * 
+	 * @param prefFile
+	 *            The file to read the preferences from.
 	 */
 	public XSharedPreferences(File prefFile) {
 		mFile = prefFile;
@@ -44,19 +46,26 @@ public final class XSharedPreferences implements SharedPreferences {
 	}
 
 	/**
-	 * Read settings from the default preferences for a package.
-	 * These preferences are returned by {@link PreferenceManager#getDefaultSharedPreferences}.
-	 * @param packageName The package name.
+	 * Read settings from the default preferences for a package. These
+	 * preferences are returned by
+	 * {@link PreferenceManager#getDefaultSharedPreferences}.
+	 * 
+	 * @param packageName
+	 *            The package name.
 	 */
 	public XSharedPreferences(String packageName) {
 		this(packageName, packageName + "_preferences");
 	}
 
 	/**
-	 * Read settings from a custom preferences file for a package.
-	 * These preferences are returned by {@link Context#getSharedPreferences(String, int)}.
-	 * @param packageName The package name.
-	 * @param prefFileName The file name without ".xml".
+	 * Read settings from a custom preferences file for a package. These
+	 * preferences are returned by
+	 * {@link Context#getSharedPreferences(String, int)}.
+	 * 
+	 * @param packageName
+	 *            The package name.
+	 * @param prefFileName
+	 *            The file name without ".xml".
 	 */
 	public XSharedPreferences(String packageName, String prefFileName) {
 		mFile = new File(Environment.getDataDirectory(), "data/" + packageName + "/shared_prefs/" + prefFileName + ".xml");
@@ -67,19 +76,27 @@ public final class XSharedPreferences implements SharedPreferences {
 	/**
 	 * Tries to make the preferences file world-readable.
 	 *
-	 * <p><strong>Warning:</strong> This is only meant to work around permission "fix" functions that are part
-	 * of some recoveries. It doesn't replace the need to open preferences with {@code MODE_WORLD_READABLE}
-	 * in the module's UI code. Otherwise, Android will set stricter permissions again during the next save.
+	 * <p>
+	 * <strong>Warning:</strong> This is only meant to work around permission
+	 * "fix" functions that are part of some recoveries. It doesn't replace the
+	 * need to open preferences with {@code MODE_WORLD_READABLE} in the module's
+	 * UI code. Otherwise, Android will set stricter permissions again during
+	 * the next save.
 	 *
-	 * <p>This will only work if executed as root (e.g. {@code initZygote()}) and only if SELinux is disabled.
+	 * <p>
+	 * This will only work if executed as root (e.g. {@code initZygote()}) and
+	 * only if SELinux is disabled.
 	 *
 	 * @return {@code true} in case the file could be made world-readable.
 	 */
 	public boolean makeWorldReadable() {
 		if (!SELinuxHelper.getAppDataFileService().hasDirectFileAccess())
-			return false; // It doesn't make much sense to make the file readable if we wouldn't be able to access it anyway.
+			return false; // It doesn't make much sense to make the file
+			              // readable if we wouldn't be able to access it
+			              // anyway.
 
-		if (!mFile.exists()) // Just in case - the file should never be created if it doesn't exist.
+		if (!mFile.exists()) // Just in case - the file should never be created
+		                     // if it doesn't exist.
 			return false;
 
 		return mFile.setReadable(true, false);
@@ -88,7 +105,8 @@ public final class XSharedPreferences implements SharedPreferences {
 	/**
 	 * Returns the file that is backing these preferences.
 	 *
-	 * <p><strong>Warning:</strong> The file might not be accessible directly.
+	 * <p>
+	 * <strong>Warning:</strong> The file might not be accessible directly.
 	 */
 	public File getFile() {
 		return mFile;
@@ -128,7 +146,8 @@ public final class XSharedPreferences implements SharedPreferences {
 		} catch (XmlPullParserException e) {
 			Log.w(TAG, "getSharedPreferences", e);
 		} catch (FileNotFoundException ignored) {
-			// SharedPreferencesImpl has a canRead() check, so it doesn't log anything in case the file doesn't exist
+			// SharedPreferencesImpl has a canRead() check, so it doesn't log
+			// anything in case the file doesn't exist
 		} catch (IOException e) {
 			Log.w(TAG, "getSharedPreferences", e);
 		} finally {
@@ -156,7 +175,9 @@ public final class XSharedPreferences implements SharedPreferences {
 	/**
 	 * Reload the settings from file if they have changed.
 	 *
-	 * <p><strong>Warning:</strong> With enforcing SELinux, this call might be quite expensive.
+	 * <p>
+	 * <strong>Warning:</strong> With enforcing SELinux, this call might be
+	 * quite expensive.
 	 */
 	public synchronized void reload() {
 		if (hasFileChanged())
@@ -164,16 +185,20 @@ public final class XSharedPreferences implements SharedPreferences {
 	}
 
 	/**
-	 * Check whether the file has changed since the last time it has been loaded.
+	 * Check whether the file has changed since the last time it has been
+	 * loaded.
 	 *
-	 * <p><strong>Warning:</strong> With enforcing SELinux, this call might be quite expensive.
+	 * <p>
+	 * <strong>Warning:</strong> With enforcing SELinux, this call might be
+	 * quite expensive.
 	 */
 	public synchronized boolean hasFileChanged() {
 		try {
 			FileResult result = SELinuxHelper.getAppDataFileService().statFile(mFilename);
 			return mLastModified != result.mtime || mFileSize != result.size;
 		} catch (FileNotFoundException ignored) {
-			// SharedPreferencesImpl doesn't log anything in case the file doesn't exist
+			// SharedPreferencesImpl doesn't log anything in case the file
+			// doesn't exist
 			return true;
 		} catch (IOException e) {
 			Log.w(TAG, "hasFileChanged", e);
@@ -202,7 +227,7 @@ public final class XSharedPreferences implements SharedPreferences {
 	public String getString(String key, String defValue) {
 		synchronized (this) {
 			awaitLoadedLocked();
-			String v = (String)mMap.get(key);
+			String v = (String) mMap.get(key);
 			return v != null ? v : defValue;
 		}
 	}
@@ -221,7 +246,7 @@ public final class XSharedPreferences implements SharedPreferences {
 	public int getInt(String key, int defValue) {
 		synchronized (this) {
 			awaitLoadedLocked();
-			Integer v = (Integer)mMap.get(key);
+			Integer v = (Integer) mMap.get(key);
 			return v != null ? v : defValue;
 		}
 	}
@@ -230,7 +255,7 @@ public final class XSharedPreferences implements SharedPreferences {
 	public long getLong(String key, long defValue) {
 		synchronized (this) {
 			awaitLoadedLocked();
-			Long v = (Long)mMap.get(key);
+			Long v = (Long) mMap.get(key);
 			return v != null ? v : defValue;
 		}
 	}
@@ -239,7 +264,7 @@ public final class XSharedPreferences implements SharedPreferences {
 	public float getFloat(String key, float defValue) {
 		synchronized (this) {
 			awaitLoadedLocked();
-			Float v = (Float)mMap.get(key);
+			Float v = (Float) mMap.get(key);
 			return v != null ? v : defValue;
 		}
 	}
@@ -248,7 +273,7 @@ public final class XSharedPreferences implements SharedPreferences {
 	public boolean getBoolean(String key, boolean defValue) {
 		synchronized (this) {
 			awaitLoadedLocked();
-			Boolean v = (Boolean)mMap.get(key);
+			Boolean v = (Boolean) mMap.get(key);
 			return v != null ? v : defValue;
 		}
 	}

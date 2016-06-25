@@ -8,6 +8,7 @@ public abstract class XC_InitPackageResources extends XCallback {
 	public XC_InitPackageResources() {
 		super();
 	}
+
 	public XC_InitPackageResources(int priority) {
 		super(priority);
 	}
@@ -16,9 +17,13 @@ public abstract class XC_InitPackageResources extends XCallback {
 		public InitPackageResourcesParam(CopyOnWriteSortedSet<XC_InitPackageResources> callbacks) {
 			super(callbacks);
 		}
+
 		/** The name of the package for which resources are being loaded */
 		public String packageName;
-		/** Reference to the resources that can be used for calls to {@link XResources#setReplacement} */
+		/**
+		 * Reference to the resources that can be used for calls to
+		 * {@link XResources#setReplacement}
+		 */
 		public XResources res;
 	}
 

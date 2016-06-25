@@ -13,9 +13,12 @@ public final class BinderService extends BaseService {
 
 	/**
 	 * Retrieve the binder service running in the specified context.
-	 * @param target Either {@link #TARGET_APP} or {@link #TARGET_SYSTEM}.
+	 * 
+	 * @param target
+	 *            Either {@link #TARGET_APP} or {@link #TARGET_SYSTEM}.
 	 * @return A reference to the service.
-	 * @throws IllegalStateException In case the service doesn't exist (should never happen).
+	 * @throws IllegalStateException
+	 *             In case the service doesn't exist (should never happen).
 	 */
 	public static BinderService getService(int target) {
 		if (target < 0 || target > sServices.length) {
@@ -94,8 +97,7 @@ public final class BinderService extends BaseService {
 	}
 
 	@Override
-	public FileResult readFile(String filename, int offset, int length,
-			long previousSize, long previousTime) throws IOException {
+	public FileResult readFile(String filename, int offset, int length, long previousSize, long previousTime) throws IOException {
 		ensureAbsolutePath(filename);
 
 		Parcel data = Parcel.obtain();
@@ -125,25 +127,23 @@ public final class BinderService extends BaseService {
 		data.recycle();
 
 		switch (errno) {
-			case 0:
-				return new FileResult(content, size, time);
-			case 22: // EINVAL
-				if (errorMsg != null) {
-					IllegalArgumentException iae = new IllegalArgumentException(errorMsg);
-					if (offset == 0 && length == 0)
-						throw new IOException(iae);
-					else
-						throw iae;
-				} else {
-					throw new IllegalArgumentException("Offset " + offset + " / Length " + length
-							+ " is out of range for " + filename + " with size " + size);
-				}
-			default:
-				throwCommonIOException(errno, errorMsg, filename, " while reading ");
-				return null; // not reached
+		case 0:
+			return new FileResult(content, size, time);
+		case 22: // EINVAL
+			if (errorMsg != null) {
+				IllegalArgumentException iae = new IllegalArgumentException(errorMsg);
+				if (offset == 0 && length == 0)
+					throw new IOException(iae);
+				else
+					throw iae;
+			} else {
+				throw new IllegalArgumentException("Offset " + offset + " / Length " + length + " is out of range for " + filename + " with size " + size);
+			}
+		default:
+			throwCommonIOException(errno, errorMsg, filename, " while reading ");
+			return null; // not reached
 		}
 	}
-
 
 	// ----------------------------------------------------------------------------
 	private static final String INTERFACE_TOKEN = "de.robv.android.xposed.IXposedService";

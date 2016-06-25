@@ -8,9 +8,11 @@ import de.robv.android.xposed.XposedBridge.CopyOnWriteSortedSet;
 
 public abstract class XCallback implements Comparable<XCallback> {
 	public final int priority;
+
 	public XCallback() {
 		this.priority = PRIORITY_DEFAULT;
 	}
+
 	public XCallback(int priority) {
 		this.priority = priority;
 	}
@@ -28,8 +30,9 @@ public abstract class XCallback implements Comparable<XCallback> {
 		}
 
 		/**
-		 * This can be used to store anything for the scope of the callback.
-		 * Use this instead of instance variables.
+		 * This can be used to store anything for the scope of the callback. Use
+		 * this instead of instance variables.
+		 * 
 		 * @see #getObjectExtra
 		 * @see #setObjectExtra
 		 */
@@ -47,7 +50,10 @@ public abstract class XCallback implements Comparable<XCallback> {
 			return null;
 		}
 
-		/** Provides a wrapper to store <code>Object</code>s in <code>extra</code>. */
+		/**
+		 * Provides a wrapper to store <code>Object</code>s in
+		 * <code>extra</code>.
+		 */
 		public void setObjectExtra(String key, Object o) {
 			getExtra().putSerializable(key, new SerializeWrapper(o));
 		}
@@ -55,6 +61,7 @@ public abstract class XCallback implements Comparable<XCallback> {
 		private static class SerializeWrapper implements Serializable {
 			private static final long serialVersionUID = 1L;
 			private Object object;
+
 			public SerializeWrapper(Object o) {
 				object = o;
 			}
@@ -68,11 +75,14 @@ public abstract class XCallback implements Comparable<XCallback> {
 		for (int i = 0; i < param.callbacks.length; i++) {
 			try {
 				((XCallback) param.callbacks[i]).call(param);
-			} catch (Throwable t) { XposedBridge.log(t); }
+			} catch (Throwable t) {
+				XposedBridge.log(t);
+			}
 		}
 	}
 
-	protected void call(Param param) throws Throwable {};
+	protected void call(Param param) throws Throwable {
+	};
 
 	@Override
 	public int compareTo(XCallback other) {

@@ -13,8 +13,9 @@ public class XModuleResources extends Resources {
 	}
 
 	/**
-	 * Usually called with the automatically injected {@code MODULE_PATH} constant of the first parameter
-	 * and the resources received in the callback for {@link XposedBridge#hookInitPackageResources} (or
+	 * Usually called with the automatically injected {@code MODULE_PATH}
+	 * constant of the first parameter and the resources received in the
+	 * callback for {@link XposedBridge#hookInitPackageResources} (or
 	 * {@code null} for system-wide replacements.
 	 */
 	public static XModuleResources createInstance(String modulePath, XResources origRes) {
@@ -26,7 +27,7 @@ public class XModuleResources extends Resources {
 
 		XModuleResources res;
 		if (origRes != null)
-			res = new XModuleResources(assets, origRes.getDisplayMetrics(),	origRes.getConfiguration());
+			res = new XModuleResources(assets, origRes.getDisplayMetrics(), origRes.getConfiguration());
 		else
 			res = new XModuleResources(assets, null, null);
 
@@ -35,7 +36,8 @@ public class XModuleResources extends Resources {
 	}
 
 	/**
-	 * Create an {@link XResForwarder} instances that forwards requests to {@code id} in this resource.
+	 * Create an {@link XResForwarder} instances that forwards requests to
+	 * {@code id} in this resource.
 	 */
 	public XResForwarder fwd(int id) {
 		return new XResForwarder(this, id);

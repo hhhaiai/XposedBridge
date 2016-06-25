@@ -8,6 +8,7 @@ public abstract class XC_LoadPackage extends XCallback {
 	public XC_LoadPackage() {
 		super();
 	}
+
 	public XC_LoadPackage(int priority) {
 		super(priority);
 	}
@@ -16,6 +17,7 @@ public abstract class XC_LoadPackage extends XCallback {
 		public LoadPackageParam(CopyOnWriteSortedSet<XC_LoadPackage> callbacks) {
 			super(callbacks);
 		}
+
 		/** The name of the package being loaded */
 		public String packageName;
 		/** The process in which the package is executed */
@@ -24,7 +26,10 @@ public abstract class XC_LoadPackage extends XCallback {
 		public ClassLoader classLoader;
 		/** More information about the application to be loaded */
 		public ApplicationInfo appInfo;
-		/** Set to true if this is the first (and main) application for this process */
+		/**
+		 * Set to true if this is the first (and main) application for this
+		 * process
+		 */
 		public boolean isFirstApplication;
 	}
 
