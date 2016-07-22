@@ -44,16 +44,10 @@ public class XResources extends MiuiResources {
 	private static final SparseArray<HashMap<String, Object>> sReplacements = new SparseArray<HashMap<String, Object>>();
 	private static final SparseArray<HashMap<String, ResourceNames>> sResourceNames = new SparseArray<HashMap<String, ResourceNames>>();
 
-	private static final byte[] sSystemReplacementsCache = new byte[256]; // bitmask:
-	                                                                      // 0x000700ff
-	                                                                      // =>
-	                                                                      // 2048
-	                                                                      // bit
-	                                                                      // =>
-	                                                                      // 256
-	                                                                      // bytes
-	private byte[] mReplacementsCache; // bitmask: 0x0007007f => 1024 bit => 128
-	                                   // bytes
+	// bitmask: 0x000700ff => 2048 bit => 256 bytes
+	private static final byte[] sSystemReplacementsCache = new byte[256];
+	// bitmask: 0x0007007f => 1024 bit => 128 bytes
+	private byte[] mReplacementsCache;
 	private static final HashMap<String, byte[]> sReplacementsCacheMap = new HashMap<String, byte[]>();
 	private static final SparseArray<ColorStateList> sColorStateListCache = new SparseArray<ColorStateList>(0);
 
